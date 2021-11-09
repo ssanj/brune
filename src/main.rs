@@ -1,4 +1,4 @@
-use nom::{IResult, bytes::complete::{tag, take_while}, combinator::{map, opt}, sequence::delimited};
+use nom::{IResult, Parser, bytes::complete::{tag, take_while}, combinator::{map, opt}, sequence::delimited};
 
 
 #[derive(Debug,PartialEq)]
@@ -38,7 +38,6 @@ fn is_allowed_punctuation(c: char) -> bool {
 fn is_digit(c: char) -> bool {
     c.is_digit(10)
 }
-
 
 
 fn take_tag<'a>(prefix: &'a str, input: &'a str) -> IResult<&'a str, &'a str> {
@@ -107,7 +106,12 @@ fn git_line_parser<'a>(input: &'a str) -> IResult<&'a str, GitHubBranchLine> {
 
 }
 
-fn main() {}
+fn main() {
+    let git_line = "[info]   PERSON1/FeatureD eeee4444 [gone] Random weird comments";
+    println!("parsing '{}'", git_line);
+    let (_, branch_line) = git_line_parser(git_line).unwrap();
+    println!("{:?}", branch_line)
+}
 
 #[test]
 fn parse_git_line_remove_info() {
