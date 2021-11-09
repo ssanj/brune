@@ -1,4 +1,4 @@
-use nom::{IResult, Parser, bytes::complete::{tag, take_while}, combinator::{map, opt}, sequence::delimited};
+use nom::{IResult, bytes::complete::{tag, take_while}, combinator::{map, opt}, sequence::delimited};
 
 
 #[derive(Debug,PartialEq)]
@@ -49,9 +49,11 @@ fn take_whitespace<'a>(input: &'a str) -> IResult<&'a str, &'a str> {
     take_while(is_whitespace)(input)
 }
 
+
 fn take_alphabetic<'a>(input: &'a str) -> IResult<&'a str, &'a str> {
     take_while(is_alphabetic)(input)
 }
+
 
 fn take_branch_name<'a>(input: &'a str) -> IResult<&'a str, &'a str> {
     take_while(|c| is_alphabetic(c) || is_allowed_punctuation(c) || is_digit(c))(input)
@@ -61,7 +63,8 @@ fn take_annotation<'a>(input: &'a str) -> IResult<&'a str, &'a str> {
     delimited(
         tag("["),
         take_while(|c| is_alphabetic(c) || is_allowed_punctuation(c) || is_digit(c) || is_whitespace(c)),
-        tag("]"))(input)
+        tag("]")
+    )(input)
 }
 
 // TODO: How can we write this in terms of other Parsers instead of creating a new one?
@@ -221,4 +224,17 @@ fn parse_git_line_5() {
     let expected = GitHubBranchLine { branch_name: "XYZ/ID-9AB-blee-blah-2".to_string(), branch_type: GitHubBranchType::Active, comment: "Blah de blah".to_string() };
     assert_eq!(m,  expected);
     assert_eq!(r, "Blah de blah");
+}
+
+/// 1. Hyphenated and slashed branch name
+/// 2. Star (representing current branch)
+/// 3. [ahead 1] annotation
+/// 4. Emoji in comment
+#[test]
+fn parse_git_line_6() {
+    let git_line = "[info] * XYZ/ID-9AB-blee-blah-2                        dddd3333   [ahead 1]   Blah 😃 blah";
+    let (r, m) = git_line_parser(git_line).unwrap();
+    let expected = GitHubBranchLine { branch_name: "XYZ/ID-9AB-blee-blah-2".to_string(), branch_type: GitHubBranchType::Active, comment: "Blah 😃 blah".to_string() };
+    assert_eq!(m,  expected);
+    assert_eq!(r, "Blah 😃 blah");
 }
