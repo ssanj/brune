@@ -85,8 +85,7 @@ fn take_hex<'a>(input: &'a str) -> IResult<&'a str, HexValue> {
 /// "[info]   PERSON1/FeatureD eeee4444 [gone] Random weird comments"
 ///
 fn git_line_parser<'a>(input: &'a str) -> IResult<&'a str, GitHubBranchLine> {
-    let (tail1, _)          = take_tag("[info]", input)?;
-    let (tail2, _)          = take_whitespace_or_star(tail1)?;
+    let (tail2, _)          = take_whitespace_or_star(input)?;
     let (tail3, branch_n)   = take_branch_name(tail2)?;
     let (tail4, _)          = take_whitespace(tail3)?;
     let (tail5, _hex_value) = take_hex(tail4)?;
@@ -110,7 +109,7 @@ fn git_line_parser<'a>(input: &'a str) -> IResult<&'a str, GitHubBranchLine> {
 }
 
 fn main() {
-    let git_line = "[info]   PERSON1/FeatureD eeee4444 [gone] Random weird comments";
+    let git_line = "   PERSON1/FeatureD eeee4444 [gone] Random weird comments";
     println!("parsing '{}'", git_line);
     let (_, branch_line) = git_line_parser(git_line).unwrap();
     println!("{:?}", branch_line)
@@ -172,7 +171,7 @@ fn parse_git_line_take_hex() {
 /// 2. [gone] annotation
 #[test]
 fn parse_git_line() {
-    let git_line = "[info]   FeatureC         dddd3333 [gone] Random weird comments";
+    let git_line = "   FeatureC         dddd3333 [gone] Random weird comments";
     let (r, m) = git_line_parser(git_line).unwrap();
     let expected = GitHubBranchLine { branch_name: "FeatureC".to_string(), branch_type: GitHubBranchType::Deleted, comment: "Random weird comments".to_string() };
     assert_eq!(m,  expected);
@@ -183,7 +182,7 @@ fn parse_git_line() {
 /// 2. No annotation
 #[test]
 fn parse_git_line_2() {
-    let git_line = "[info]   ID-9AB-blee-blah-2                              dddd3333 Blah de blah";
+    let git_line = "   ID-9AB-blee-blah-2                              dddd3333 Blah de blah";
     let (r, m) = git_line_parser(git_line).unwrap();
     let expected = GitHubBranchLine { branch_name: "ID-9AB-blee-blah-2".to_string(), branch_type: GitHubBranchType::Active, comment: "Blah de blah".to_string() };
     assert_eq!(m,  expected);
@@ -195,7 +194,7 @@ fn parse_git_line_2() {
 /// 3. No annotation
 #[test]
 fn parse_git_line_3() {
-    let git_line = "[info] * ID-9AB-blee-blah-2                              dddd3333 Blah de blah";
+    let git_line = " * ID-9AB-blee-blah-2                              dddd3333 Blah de blah";
     let (r, m) = git_line_parser(git_line).unwrap();
     let expected = GitHubBranchLine { branch_name: "ID-9AB-blee-blah-2".to_string(), branch_type: GitHubBranchType::Active, comment: "Blah de blah".to_string() };
     assert_eq!(m,  expected);
@@ -206,7 +205,7 @@ fn parse_git_line_3() {
 /// 2. [behind 3] annotation
 #[test]
 fn parse_git_line_4() {
-    let git_line = "[info]   FeatureB         eeee3333 [behind 3] Random weird comments";
+    let git_line = "FeatureB         eeee3333 [behind 3] Random weird comments";
     let (r, m) = git_line_parser(git_line).unwrap();
     let expected = GitHubBranchLine { branch_name: "FeatureB".to_string(), branch_type: GitHubBranchType::Active, comment: "Random weird comments".to_string() };
     assert_eq!(m,  expected);
@@ -219,7 +218,7 @@ fn parse_git_line_4() {
 /// 3. [ahead 1] annotation
 #[test]
 fn parse_git_line_5() {
-    let git_line = "[info] * XYZ/ID-9AB-blee-blah-2                        dddd3333   [ahead 1]   Blah de blah";
+    let git_line = " * XYZ/ID-9AB-blee-blah-2                        dddd3333   [ahead 1]   Blah de blah";
     let (r, m) = git_line_parser(git_line).unwrap();
     let expected = GitHubBranchLine { branch_name: "XYZ/ID-9AB-blee-blah-2".to_string(), branch_type: GitHubBranchType::Active, comment: "Blah de blah".to_string() };
     assert_eq!(m,  expected);
@@ -232,7 +231,7 @@ fn parse_git_line_5() {
 /// 4. Emoji in comment
 #[test]
 fn parse_git_line_6() {
-    let git_line = "[info] * XYZ/ID-9AB-blee-blah-2                        dddd3333   [ahead 1]   Blah 😃 blah";
+    let git_line = " * XYZ/ID-9AB-blee-blah-2                        dddd3333   [ahead 1]   Blah 😃 blah";
     let (r, m) = git_line_parser(git_line).unwrap();
     let expected = GitHubBranchLine { branch_name: "XYZ/ID-9AB-blee-blah-2".to_string(), branch_type: GitHubBranchType::Active, comment: "Blah 😃 blah".to_string() };
     assert_eq!(m,  expected);
